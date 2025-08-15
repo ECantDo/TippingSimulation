@@ -11,6 +11,7 @@ public class Plane {
 
 	private int length;
 	private int height;
+	private int activePivotLocation;
 	/**
 	 * position
 	 */
@@ -30,6 +31,7 @@ public class Plane {
 		this.massLocations = new ArrayList<>();
 
 		this.angle = 0;
+		this.activePivotLocation = this.length / 2;
 
 		this.updateCG = true;
 		this.getCenterOfGravity();
@@ -68,6 +70,10 @@ public class Plane {
 
 	public int[] getPivots() {
 		return this.getPivots(false);
+	}
+
+	public int getActivePivotLocation() {
+		return this.activePivotLocation;
 	}
 
 	public int[][] getMassPoints() {
@@ -255,35 +261,35 @@ public class Plane {
 			return;
 		}
 
-		int activePivotLoc;
+
 		if (this.angle > 0)
-			activePivotLoc = pivotMinLoc; // left side lower
+			this.activePivotLocation = pivotMinLoc; // left side lower
 		else if (this.angle < 0)
-			activePivotLoc = pivotMaxLoc; // right side lower
+			this.activePivotLocation = pivotMaxLoc; // right side lower
 		else {
 			// Beam is level → check which way it's rotating
 			if (this.angularVelocity > 0) {
 				// Tipping leftward
-				activePivotLoc = pivotMinLoc;
+				this.activePivotLocation = pivotMinLoc;
 			} else if (this.angularVelocity < 0) {
 				// Tipping rightward
-				activePivotLoc = pivotMaxLoc;
+				this.activePivotLocation = pivotMaxLoc;
 			} else {
 				// No rotation or motion — base it on CG
 				if (cg < pivotMinLoc)
-					activePivotLoc = pivotMinLoc;
+					this.activePivotLocation = pivotMinLoc;
 				else if (cg > pivotMaxLoc)
-					activePivotLoc = pivotMaxLoc;
+					this.activePivotLocation = pivotMaxLoc;
 				else
 					return; // Cant compute anything, return.
 			}
 		}
 
-		double momentOfInertia = this.getMomentOfInertia(activePivotLoc);
+		double momentOfInertia = this.getMomentOfInertia(this.activePivotLocation);
 
 		double timeStep = delta / 20.0; // At 20tps
 
-		double torque = this.getTorque(activePivotLoc);
+		double torque = this.getTorque(this.activePivotLocation);
 
 		double angularAcceleration = torque / momentOfInertia;
 		this.angularVelocity += angularAcceleration * timeStep;
@@ -302,17 +308,17 @@ public class Plane {
 			return;
 		}
 
-		double leftTipY = this.height - activePivotLoc * Math.sin(newAngle);
-		double rightTipY = this.height + (this.length - activePivotLoc) * Math.sin(newAngle);
+		double leftTipY = this.height - this.activePivotLocation * Math.sin(newAngle);
+		double rightTipY = this.height + (this.length - this.activePivotLocation) * Math.sin(newAngle);
 
 		if (leftTipY <= 0) {
 			this.angularVelocity = 0;
-			double safeRatio = Math.max(-1.0, Math.min(1.0, this.height / (double) activePivotLoc));
+			double safeRatio = Math.max(-1.0, Math.min(1.0, this.height / (double) this.activePivotLocation));
 			this.angle = Math.asin(safeRatio);
 			return;
 		} else if (rightTipY <= 0) {
 			this.angularVelocity = 0;
-			double safeRatio = Math.max(-1.0, Math.min(1.0, -this.height / (double) (this.length - activePivotLoc)));
+			double safeRatio = Math.max(-1.0, Math.min(1.0, -this.height / (double) (this.length - this.activePivotLocation)));
 			this.angle = Math.asin(safeRatio);
 			return;
 		}

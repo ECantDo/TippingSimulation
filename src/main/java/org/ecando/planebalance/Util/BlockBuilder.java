@@ -7,8 +7,13 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3i;
 
 public class BlockBuilder {
-	private ServerWorld world;
-	private Vec3i initLocation;
+	protected ServerWorld world;
+	protected Vec3i initLocation;
+
+	public BlockBuilder(ServerWorld world, Vec3i initLocation) {
+		this.world = world;
+		this.initLocation = initLocation;
+	}
 
 	/**
 	 * Set the block position in the world relative to the init position
