@@ -1,7 +1,5 @@
 package org.ecando.planebalance.Simulation;
 
-import org.ecando.planebalance.Util;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -10,10 +8,12 @@ public class Plane {
 
 	private int length;
 	private int height;
+	private int pointOfRotation;
 	/**
 	 * position
 	 */
 	private double centerOfGravity;
+	private double angle;
 	private int[] pivots;
 	/**
 	 * massLocations is an int[] -> [mass, position]
@@ -26,8 +26,10 @@ public class Plane {
 		this.pivots = pivots.clone();
 		this.massLocations = new ArrayList<>();
 
-		this.updateCG = false;
-		this.centerOfGravity = this.length / 2.0;
+		this.angle = 0;
+
+		this.updateCG = true;
+		this.getCenterOfGravity();
 	}
 
 	public Plane(int height, int[] pivots) {
@@ -65,11 +67,21 @@ public class Plane {
 		return this.massLocations.toArray(new int[0][]);
 	}
 
+	/**
+	 * Gets the angle of the beam in radians. 0 is pointing towards +x, horizontal.
+	 *
+	 * @return The angle of the beam in radians.
+	 */
+	public double getAngle() {
+		return this.angle;
+	}
+
 	//==================================================================================================================
 	// Setters
 	//==================================================================================================================
 	public void setLength(int length) {
 		this.length = length;
+		this.updateCG = true;
 	}
 
 	public void setHeight(int height) {
@@ -88,6 +100,11 @@ public class Plane {
 		System.arraycopy(pivots, 0, this.pivots, prev.length, pivots.length);
 	}
 
+	public void addPivot(int pivot) {
+		this.pivots = Arrays.copyOf(this.pivots, this.pivots.length + 1);
+		this.pivots[this.pivots.length - 1] = pivot;
+	}
+
 	/**
 	 * Add a new mass object to the plane
 	 *
@@ -103,16 +120,25 @@ public class Plane {
 			return false;
 
 		this.massLocations.add(new int[]{mass, position});
-
+		this.updateCG = true;
 		return true;
 	}
 
 	public void clearMassLocations() {
+		this.updateCG = true;
 		this.massLocations.clear();
 	}
 
 	public int[] removeMassLocation(int idx) {
+		if (idx < 0 || idx >= this.massLocations.size())
+			return null;
+
+		this.updateCG = true;
 		return this.massLocations.remove(idx);
+	}
+
+	public void clearPivotLocations() {
+		this.pivots = new int[]{};
 	}
 
 	//==================================================================================================================
@@ -142,10 +168,19 @@ public class Plane {
 		return this.centerOfGravity;
 	}
 
-	public int getMass() {
+	public int getTotalMass() {
 		int mass = this.length;
 		for (int[] masses : this.massLocations)
 			mass += masses[0];
 		return mass;
+
+	}
+
+	public double getTorque(int pivotIdx) {
+		if (pivotIdx < 0 || pivotIdx >= this.pivots.length)
+			throw new IndexOutOfBoundsException();
+
+		return Math.cos(this.angle) * this.getTotalMass() * 9.81 *
+				(this.getCenterOfGravity() - this.pivots[pivotIdx]);
 	}
 }
