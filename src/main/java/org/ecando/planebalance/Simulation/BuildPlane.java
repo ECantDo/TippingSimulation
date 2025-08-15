@@ -25,8 +25,8 @@ public class BuildPlane extends BlockBuilder {
 		int length = plane.getLength();
 		int height = plane.getHeight();
 		int pivotLocation = plane.getActivePivotLocation();
-		int CGi = (int) Math.round(plane.getCenterOfGravity());
-		double angle = plane.getAngle();
+		int CGi = (int) Math.round(plane.getCenterOfGravity()) - 1;
+		double angle = -plane.getAngle();
 		int[] pivots = plane.getPivots();
 
 		if (startBounds != null && endBounds != null) {
@@ -47,7 +47,7 @@ public class BuildPlane extends BlockBuilder {
 			double rotatedY = dx * sine;
 
 			int blockX = this.initLocation.getX() + (int) Math.round(rotatedX) + pivotLocation;
-			int blockY = this.initLocation.getY() + (int) Math.round(rotatedY);
+			int blockY = this.initLocation.getY() + (int) Math.round(rotatedY) + height;
 			int blockZ = this.initLocation.getZ();
 
 			if (blockX == CGi)

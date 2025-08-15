@@ -189,12 +189,18 @@ public class Plane {
 
 	}
 
-	public double getTorque(int pivotIdx) {
-		if (pivotIdx < 0 || pivotIdx >= this.pivots.length)
-			throw new IndexOutOfBoundsException();
+	public double getTorque(int pivotLocation) {
+		if (pivotLocation < 0) {
+			throw new IndexOutOfBoundsException("Pivot location cannot be less than 0"
+					+ "\nFound " + pivotLocation);
+		}
+		if (pivotLocation > this.length) {
+			throw new IndexOutOfBoundsException("Pivot location cannot be greater than "
+					+ this.length + "\nFound " + pivotLocation);
+		}
 
 		return Math.cos(this.angle) * this.getTotalMass() * Plane.g *
-				(this.getCenterOfGravity() - this.pivots[pivotIdx]);
+				(this.getCenterOfGravity() - pivotLocation);
 	}
 
 	/**
@@ -204,9 +210,10 @@ public class Plane {
 	 * @return
 	 */
 	public double getMomentOfInertia(int pivotLocation) {
-		if (pivotLocation < 0 || pivotLocation >= this.length)
-			throw new IndexOutOfBoundsException();
-
+		if (pivotLocation < 0 || pivotLocation >= this.length) {
+			throw new IndexOutOfBoundsException("Found pivotLocation to be " + pivotLocation + " when it should be" +
+					" between 0 and " + this.length);
+		}
 		// Beam mass and length
 		double M = this.length; // assuming 1 kg per unit length
 		double L = this.length;
