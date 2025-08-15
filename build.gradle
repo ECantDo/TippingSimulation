@@ -1,6 +1,7 @@
 plugins {
     id 'fabric-loom' version '1.11-SNAPSHOT'
     id 'maven-publish'
+    id 'org.jetbrains.kotlin.jvm' version '1.9.0'
 }
 
 version = project.mod_version
@@ -33,15 +34,25 @@ repositories {
     // Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
     // See https://docs.gradle.org/current/userguide/declaring_repositories.html
     // for more information about repositories.
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
 }
 
 dependencies {
-    // To change the versions see the gradle.properties file
+    // Kotlin
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.0" // or the kotlin version mcvolume uses
+    // Minecraft and mappings
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
+    // Fabric Loader & API
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+
+    // MCSchematic
+    implementation("com.github.sloimayyy:smath:1.1.4")
+    implementation("com.github.Querz:NBT:6.1")
+    implementation("com.github.sloimayyy:mcvolume:1.0.15")
 }
 
 processResources {

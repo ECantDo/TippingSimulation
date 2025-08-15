@@ -55,6 +55,10 @@ public class Plane {
 		return this.height;
 	}
 
+	public int getPivot(int idx) {
+		return this.pivots[idx];
+	}
+
 	public int[] getPivots(boolean getPointer) {
 		if (getPointer)
 			return this.pivots;
