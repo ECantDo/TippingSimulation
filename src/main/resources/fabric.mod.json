@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "planebalance",
+  "version": "${version}",
+  "name": "PlaneBalance",
+  "description": "",
+  "authors": [],
+  "contact": {},
+  "license": "All-Rights-Reserved",
+  "icon": "assets/planebalance/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "fabric-datagen": [
+      "org.ecando.planebalance.client.PlanebalanceDataGenerator"
+    ],
+    "client": [
+      "org.ecando.planebalance.client.PlanebalanceClient"
+    ],
+    "main": [
+      "org.ecando.planebalance.Planebalance"
+    ]
+  },
+  "mixins": [
+    "planebalance.mixins.json",
+    {
+      "config": "planebalance.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}
