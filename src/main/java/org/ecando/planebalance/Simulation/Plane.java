@@ -4,16 +4,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Plane {
+	public static final double g = 9.81;
+	public static final double damping = 0.8;
+
 	private boolean updateCG;
 
 	private int length;
 	private int height;
-	private int pointOfRotation;
 	/**
 	 * position
 	 */
 	private double centerOfGravity;
 	private double angle;
+	private double angularVelocity = 0;
 	private int[] pivots;
 	/**
 	 * massLocations is an int[] -> [mass, position]
@@ -180,7 +183,136 @@ public class Plane {
 		if (pivotIdx < 0 || pivotIdx >= this.pivots.length)
 			throw new IndexOutOfBoundsException();
 
-		return Math.cos(this.angle) * this.getTotalMass() * 9.81 *
+		return Math.cos(this.angle) * this.getTotalMass() * Plane.g *
 				(this.getCenterOfGravity() - this.pivots[pivotIdx]);
+	}
+
+	/**
+	 * Takes in the location of the pivot and computes the moment of inertia of the beam.
+	 *
+	 * @param pivotLocation
+	 * @return
+	 */
+	public double getMomentOfInertia(int pivotLocation) {
+		if (pivotLocation < 0 || pivotLocation >= this.length)
+			throw new IndexOutOfBoundsException();
+
+		// Beam mass and length
+		double M = this.length; // assuming 1 kg per unit length
+		double L = this.length;
+
+		// Distance from pivot to beam center
+		double d = Math.abs(pivotLocation - L / 2.0);
+
+		// Beam moment of inertia about pivot
+		double Ibeam = (1.0 / 12.0) * M * L * L + M * d * d;
+
+		// Add discrete masses
+		double I_masses = 0;
+		for (int[] massPos : this.massLocations) {
+			double m = massPos[0];
+			double x = massPos[1];
+			double r = x - pivotLocation;
+			I_masses += m * r * r;
+		}
+
+		return Ibeam + I_masses;
+	}
+
+	public void simulationStep() {
+		this.simulationStep(1);
+	}
+
+	/**
+	 * Make a simulation step
+	 *
+	 * @param delta Number of ticks to simulate through; 1 tick = 1/20 seconds
+	 */
+	public void simulationStep(int delta) {
+		// Don't do anything if there aren't any pivot points
+		if (this.pivots.length == 0) {
+			this.angularVelocity = 0;
+			return;
+		}
+
+		int pivotMinLoc = this.length, pivotMaxLoc = 0;
+		for (int p : this.pivots) {
+			// Compute both incase there is 1 pivot, needs to be in the same place
+			if (p < pivotMinLoc)
+				pivotMinLoc = p;
+			if (p > pivotMaxLoc)
+				pivotMaxLoc = p;
+		}
+
+		double cg = this.getCenterOfGravity();
+		// If the pivot point is right under the CG, skip, or between the min and max points
+		if (cg >= pivotMinLoc && cg <= pivotMaxLoc && this.angle == 0) {
+			this.angularVelocity = 0;
+			return;
+		}
+
+		int activePivotLoc;
+		if (this.angle > 0)
+			activePivotLoc = pivotMinLoc; // left side lower
+		else if (this.angle < 0)
+			activePivotLoc = pivotMaxLoc; // right side lower
+		else {
+			// Beam is level → check which way it's rotating
+			if (this.angularVelocity > 0) {
+				// Tipping leftward
+				activePivotLoc = pivotMinLoc;
+			} else if (this.angularVelocity < 0) {
+				// Tipping rightward
+				activePivotLoc = pivotMaxLoc;
+			} else {
+				// No rotation or motion — base it on CG
+				if (cg < pivotMinLoc)
+					activePivotLoc = pivotMinLoc;
+				else if (cg > pivotMaxLoc)
+					activePivotLoc = pivotMaxLoc;
+				else
+					return; // Cant compute anything, return.
+			}
+		}
+
+		double momentOfInertia = this.getMomentOfInertia(activePivotLoc);
+
+		double timeStep = delta / 20.0; // At 20tps
+
+		double torque = this.getTorque(activePivotLoc);
+
+		double angularAcceleration = torque / momentOfInertia;
+		this.angularVelocity += angularAcceleration * timeStep;
+		this.angularVelocity *= damping;
+
+		double newAngle = this.angle + this.angularVelocity * timeStep;
+		// If the angle goes past the vertical stop it
+		double MAX_ANGLE = 1.55334; // ≈ 89 degrees
+		if (newAngle >= MAX_ANGLE) {
+			this.angle = MAX_ANGLE;
+			this.angularVelocity = 0;
+			return;
+		} else if (newAngle <= -MAX_ANGLE) {
+			this.angle = -MAX_ANGLE;
+			this.angularVelocity = 0;
+			return;
+		}
+
+		double leftTipY = this.height - activePivotLoc * Math.sin(newAngle);
+		double rightTipY = this.height + (this.length - activePivotLoc) * Math.sin(newAngle);
+
+		if (leftTipY <= 0) {
+			this.angularVelocity = 0;
+			double safeRatio = Math.max(-1.0, Math.min(1.0, this.height / (double) activePivotLoc));
+			this.angle = Math.asin(safeRatio);
+			return;
+		} else if (rightTipY <= 0) {
+			this.angularVelocity = 0;
+			double safeRatio = Math.max(-1.0, Math.min(1.0, -this.height / (double) (this.length - activePivotLoc)));
+			this.angle = Math.asin(safeRatio);
+			return;
+		}
+
+		this.angle = newAngle;
 	}
 }
