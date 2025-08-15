@@ -1,4 +1,4 @@
-package org.ecando.planebalance;
+package org.ecando.planebalance.Util;
 
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.server.command.ServerCommandSource;
