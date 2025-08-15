@@ -6,8 +6,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Plane {
+	private boolean updateCG;
+
 	private int length;
 	private int height;
+	/**
+	 * position
+	 */
+	private double centerOfGravity;
 	private int[] pivots;
 	/**
 	 * massLocations is an int[] -> [mass, position]
@@ -19,6 +25,9 @@ public class Plane {
 		this.height = height;
 		this.pivots = pivots.clone();
 		this.massLocations = new ArrayList<>();
+
+		this.updateCG = false;
+		this.centerOfGravity = this.length / 2.0;
 	}
 
 	public Plane(int height, int[] pivots) {
@@ -106,4 +115,37 @@ public class Plane {
 		return this.massLocations.remove(idx);
 	}
 
+	//==================================================================================================================
+	// Simulation
+	//==================================================================================================================
+
+	/**
+	 * Compute the center of gravity, provided it doesn't need recomputing
+	 *
+	 * @return The center of gravity -> Position
+	 */
+	public double getCenterOfGravity() {
+		if (!this.updateCG)
+			return this.centerOfGravity;
+
+		int totalMass = this.length; // Just for the bar/beam itself
+		int weightedSum = (this.length * this.length + this.length) / 2; // just for the bar/beam itself
+
+		for (int[] m : this.massLocations) {
+			totalMass += m[0];
+			weightedSum += m[0] * m[1];
+		}
+
+		this.updateCG = false;
+		this.centerOfGravity = (double) weightedSum / (double) totalMass;
+
+		return this.centerOfGravity;
+	}
+
+	public int getMass() {
+		int mass = this.length;
+		for (int[] masses : this.massLocations)
+			mass += masses[0];
+		return mass;
+	}
 }
