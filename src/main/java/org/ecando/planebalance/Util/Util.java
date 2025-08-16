@@ -6,9 +6,9 @@ import net.minecraft.text.Text;
 
 public class Util {
 
-	public static void chatSendFeedback(String content, CommandContext<ServerCommandSource> commandContext) {
+	public static void chatSendFeedback(String text, CommandContext<ServerCommandSource> commandContext) {
 		ServerCommandSource source = commandContext.getSource(); // now we have the correct type
-		source.sendFeedback(() -> Text.literal(content), false);
+		source.sendFeedback(() -> Text.literal(text), false);
 	}
 
 
