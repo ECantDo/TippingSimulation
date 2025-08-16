@@ -8,6 +8,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.Vec3i;
 import org.ecando.planebalance.Simulation.BuildPlane;
 import org.ecando.planebalance.Simulation.Plane;
+import org.ecando.planebalance.Util.BlockBuilder;
 import org.ecando.planebalance.Util.Util;
 
 public class ModCommands {
@@ -38,13 +39,14 @@ public class ModCommands {
 		dispatcher.register(
 				CommandManager.literal("testtip").executes(commandContext -> {
 					try {
+						Util.chatSendFeedback("Running TeST TIP", commandContext);
 						int l = 31;
 						Plane p = new Plane(l, 10, new int[]{l / 2});
 						p.addMassLocation(l, 0);
 						p.simulationStep(20);
 						BuildPlane bp = new BuildPlane(commandContext.getSource().getWorld(),
 								new Vec3i(0, 0, 0), p);
-						bp.update(1);
+						bp.update(5);
 					} catch (Exception e) {
 						Util.chatSendFeedback(e.toString(), commandContext);
 						e.printStackTrace();
