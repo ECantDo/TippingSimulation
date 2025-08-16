@@ -1,6 +1,8 @@
 package org.ecando.planebalance;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import net.minecraft.command.argument.BlockPosArgumentType;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -13,19 +15,24 @@ import org.ecando.planebalance.Util.Util;
 
 public class ModCommands {
 
+	private static CommandDispatcher<ServerCommandSource> dispatcher;
+
 	public static void registerCommands() {
 		CommandRegistrationCallback.EVENT.register((
-				(commandDispatcher, commandRegistryAccess, registrationEnvironment) ->
-						registerHelloCommand(commandDispatcher)));
-
-		CommandRegistrationCallback.EVENT.register((
-				((commandDispatcher, commandRegistryAccess, registrationEnvironment) ->
-						registerTestTip(commandDispatcher))
-		));
+				(commandDispatcher, commandRegistryAccess, registrationEnvironment) -> {
+					dispatcher = commandDispatcher;
+					registerHelloCommand();
+					registerCreateSimulation();
+					registerSetLength();
+					registerClearArea();
+					registerSetDepth();
+					registerSimulateStep();
+					dispatcher = null;
+				}));
 	}
 
 	// TODO, remove at some point
-	private static void registerHelloCommand(CommandDispatcher<ServerCommandSource> dispatcher) {
+	private static void registerHelloCommand() {
 		dispatcher.register(
 				CommandManager.literal("hello")
 						.executes(commandContext -> {
@@ -35,22 +42,68 @@ public class ModCommands {
 		);
 	}
 
-	private static void registerTestTip(CommandDispatcher<ServerCommandSource> dispatcher) {
+	private static void registerCreateSimulation() {
 		dispatcher.register(
-				CommandManager.literal("testtip").executes(commandContext -> {
-					try {
-						Util.chatSendFeedback("Running TeST TIP", commandContext);
-						int l = 31;
-						Plane p = new Plane(l, 10, new int[]{l / 2});
-						p.addMassLocation(l, 0);
-						p.simulationStep(20);
-						BuildPlane bp = new BuildPlane(commandContext.getSource().getWorld(),
-								new Vec3i(0, 0, 0), p);
-						bp.update(5);
-					} catch (Exception e) {
-						Util.chatSendFeedback(e.toString(), commandContext);
-						e.printStackTrace();
-					}
+				CommandManager.literal("tippingInitialize")
+						.then(CommandManager.argument("pos", BlockPosArgumentType.blockPos())
+								.executes(CommandOperationManager::runInit))
+		);
+	}
+
+	private static void registerSetLength() {
+		dispatcher.register(
+				CommandManager.literal("tippingSetLength")
+						.then(CommandManager.argument("length", IntegerArgumentType.integer(3))
+								.executes(CommandOperationManager::runSetLength))
+		);
+	}
+
+	private static void registerClearArea() {
+		dispatcher.register(
+				CommandManager.literal("tippingClear")
+						.executes(CommandOperationManager::runClear)
+		);
+	}
+
+	private static void registerSetDepth() {
+		dispatcher.register(
+				CommandManager.literal("tippingSetDepth")
+						.then(CommandManager.argument("depth", IntegerArgumentType.integer(1, 100))
+								.executes(CommandOperationManager::runSetDepth))
+		);
+	}
+
+	private static void registerAddMass() {
+		dispatcher.register(
+				CommandManager.literal("").executes(commandContext -> {
+
+					return 1;
+				})
+		);
+	}
+
+	private static void registerAddPivot() {
+		dispatcher.register(
+				CommandManager.literal("").executes(commandContext -> {
+
+					return 1;
+				})
+		);
+	}
+
+	private static void registerSimulateStep() {
+		dispatcher.register(
+				CommandManager.literal("tippingSimulateSteps")
+						.executes(CommandOperationManager::runSimulateStep)
+						.then(CommandManager.argument("tickDelta", IntegerArgumentType.integer(1))
+								.executes(CommandOperationManager::runSimulateSteps))
+		);
+	}
+
+	private static void registerStartSimulation() {
+		dispatcher.register(
+				CommandManager.literal("").executes(commandContext -> {
+
 					return 1;
 				})
 		);
