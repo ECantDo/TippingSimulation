@@ -46,7 +46,7 @@ public class BuildPlane extends BlockBuilder {
 
 		// New bounds tracking
 		int minX = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE;
-		int minY = Integer.MAX_VALUE, maxY = Integer.MIN_VALUE;
+		int minY = 0, maxY = Integer.MIN_VALUE;
 
 		double cosine = Math.cos(angle);
 		double sine = Math.sin(angle);
@@ -90,7 +90,9 @@ public class BuildPlane extends BlockBuilder {
 			int blockY = (int) Math.round(rotatedY) + height + 1;
 
 			Vec3i start = new Vec3i(blockX, blockY, halfDepth);
-			Vec3i end = new Vec3i(blockX, blockY + 5, halfDepth);
+			Vec3i end = new Vec3i(blockX, blockY + 3, halfDepth);
+
+			if (blockY + 3 > maxY) maxY = blockY + 3;
 
 			this.setBlocks(start, end, PIVOT_POINT);
 		}
@@ -111,5 +113,12 @@ public class BuildPlane extends BlockBuilder {
 		// Update bounds
 		this.startBounds = new Vec3i(minX, minY, 0);
 		this.endBounds = new Vec3i(maxX, maxY, depth);
+	}
+
+	public void clearArea(){
+		if (startBounds == null || endBounds == null)
+			return;
+
+		this.setBlocks(startBounds, endBounds, AIR);
 	}
 }

@@ -95,6 +95,8 @@ public class Plane {
 	public void setLength(int length) {
 		this.length = length;
 		this.updateCG = true;
+
+		this.massLocations.removeIf(massObj -> massObj[1] > length);
 	}
 
 	public void setHeight(int height) {
