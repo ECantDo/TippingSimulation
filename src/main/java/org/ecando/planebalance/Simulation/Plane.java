@@ -18,16 +18,16 @@ public class Plane {
 	private double centerOfGravity;
 	private double angle;
 	private double angularVelocity = 0;
-	private int[] pivots;
+	private ArrayList<Integer> pivots;
 	/**
 	 * massLocations is an int[] -> [mass, position]
 	 */
 	private final ArrayList<int[]> massLocations;
 
-	public Plane(int length, int height, int[] pivots) {
+	public Plane(int length, int height) {
 		this.length = length;
 		this.height = height;
-		this.pivots = pivots.clone();
+		this.pivots = new ArrayList<>();
 		this.massLocations = new ArrayList<>();
 
 		this.angle = 0;
@@ -37,12 +37,12 @@ public class Plane {
 		this.getCenterOfGravity();
 	}
 
-	public Plane(int height, int[] pivots) {
-		this(15, height, pivots);
+	public Plane(int height) {
+		this(15, height);
 	}
 
 	public Plane() {
-		this(15, 5, new int[0]);
+		this(15, 5);
 	}
 
 	//==================================================================================================================
@@ -58,18 +58,11 @@ public class Plane {
 	}
 
 	public int getPivot(int idx) {
-		return this.pivots[idx];
-	}
-
-	public int[] getPivots(boolean getPointer) {
-		if (getPointer)
-			return this.pivots;
-
-		return this.pivots.clone();
+		return this.pivots.get(idx);
 	}
 
 	public int[] getPivots() {
-		return this.getPivots(false);
+		return this.pivots.stream().mapToInt(Integer::intValue).toArray();
 	}
 
 	public int getActivePivotLocation() {
@@ -104,20 +97,14 @@ public class Plane {
 	}
 
 	public void setPivots(int[] pivots) {
-		this.pivots = pivots.clone();
-	}
-
-	public void addPivots(int[] pivots) {
-		int[] prev = this.pivots;
-		this.pivots = new int[prev.length + pivots.length];
-
-		System.arraycopy(prev, 0, this.pivots, 0, prev.length);
-		System.arraycopy(pivots, 0, this.pivots, prev.length, pivots.length);
+		this.pivots = new ArrayList<>();
+		for (int pivot : pivots) {
+			this.pivots.add(pivot);
+		}
 	}
 
 	public void addPivot(int pivot) {
-		this.pivots = Arrays.copyOf(this.pivots, this.pivots.length + 1);
-		this.pivots[this.pivots.length - 1] = pivot;
+		this.pivots.add(pivot);
 	}
 
 	/**
@@ -149,11 +136,15 @@ public class Plane {
 			return null;
 
 		this.updateCG = true;
-		return this.massLocations.remove(idx);
+		try {
+			return this.massLocations.remove(idx);
+		} catch (IndexOutOfBoundsException e) {
+			return null;
+		}
 	}
 
 	public void clearPivotLocations() {
-		this.pivots = new int[]{};
+		this.pivots.clear();
 	}
 
 	//==================================================================================================================
@@ -249,7 +240,7 @@ public class Plane {
 	 */
 	public void simulationStep(int delta) {
 		// Don't do anything if there aren't any pivot points
-		if (this.pivots.length == 0) {
+		if (this.pivots.isEmpty()) {
 			this.angularVelocity = 0;
 			return;
 		}
@@ -272,23 +263,23 @@ public class Plane {
 
 
 		if (this.angle > 0)
-			this.activePivotLocation = pivotMinLoc; // left side lower
+			this.activePivotLocation = pivotMaxLoc; // left side lower
 		else if (this.angle < 0)
-			this.activePivotLocation = pivotMaxLoc; // right side lower
+			this.activePivotLocation = pivotMinLoc; // right side lower
 		else {
 			// Beam is level → check which way it's rotating
 			if (this.angularVelocity > 0) {
 				// Tipping leftward
-				this.activePivotLocation = pivotMinLoc;
+				this.activePivotLocation = pivotMaxLoc;
 			} else if (this.angularVelocity < 0) {
 				// Tipping rightward
-				this.activePivotLocation = pivotMaxLoc;
+				this.activePivotLocation = pivotMinLoc;
 			} else {
 				// No rotation or motion — base it on CG
-				if (cg < pivotMinLoc)
-					this.activePivotLocation = pivotMinLoc;
-				else if (cg > pivotMaxLoc)
+				if (cg < pivotMaxLoc)
 					this.activePivotLocation = pivotMaxLoc;
+				else if (cg > pivotMinLoc)
+					this.activePivotLocation = pivotMinLoc;
 				else
 					return; // Cant compute anything, return.
 			}
@@ -333,5 +324,13 @@ public class Plane {
 		}
 
 		this.angle = newAngle;
+	}
+
+	public int removePivot(int idx) {
+		try {
+			return this.pivots.remove(idx);
+		} catch (IndexOutOfBoundsException e) {
+			return -1;
+		}
 	}
 }

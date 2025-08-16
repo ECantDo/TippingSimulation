@@ -2,16 +2,14 @@ package org.ecando.planebalance;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import net.minecraft.command.CommandSource;
 import net.minecraft.command.argument.BlockPosArgumentType;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.Vec3i;
-import org.ecando.planebalance.Simulation.BuildPlane;
-import org.ecando.planebalance.Simulation.Plane;
-import org.ecando.planebalance.Util.BlockBuilder;
-import org.ecando.planebalance.Util.Util;
+
+import java.util.List;
 
 public class ModCommands {
 
@@ -21,24 +19,38 @@ public class ModCommands {
 		CommandRegistrationCallback.EVENT.register((
 				(commandDispatcher, commandRegistryAccess, registrationEnvironment) -> {
 					dispatcher = commandDispatcher;
-					registerHelloCommand();
 					registerCreateSimulation();
 					registerSetLength();
 					registerClearArea();
 					registerSetDepth();
 					registerSimulateStep();
+					registerAddMass();
+					registerAddPivot();
+					registerSetHeight();
+					registerList();
+					registerRemoveMass();
+					registerRemovePivot();
 					dispatcher = null;
 				}));
 	}
 
-	// TODO, remove at some point
-	private static void registerHelloCommand() {
+	private static void registerRemoveMass() {
 		dispatcher.register(
-				CommandManager.literal("hello")
-						.executes(commandContext -> {
-							Util.chatSendFeedback("Hello, World!", commandContext);
-							return 1;
-						})
+				CommandManager.literal("tippingRemoveMass")
+						.then(CommandManager.literal("all")
+								.executes(CommandOperationManager::runClearMass))
+						.then(CommandManager.argument("idx", IntegerArgumentType.integer(0))
+								.executes(CommandOperationManager::runRemoveMass))
+		);
+	}
+
+	private static void registerRemovePivot() {
+		dispatcher.register(
+				CommandManager.literal("tippingRemovePivot")
+						.then(CommandManager.literal("all")
+								.executes(CommandOperationManager::runClearPivot))
+						.then(CommandManager.argument("idx", IntegerArgumentType.integer(0))
+								.executes(CommandOperationManager::runRemovePivot))
 		);
 	}
 
@@ -75,19 +87,20 @@ public class ModCommands {
 
 	private static void registerAddMass() {
 		dispatcher.register(
-				CommandManager.literal("").executes(commandContext -> {
-
-					return 1;
-				})
+				CommandManager.literal("tippingAddMass")
+						.then(CommandManager.argument("mass", IntegerArgumentType.integer(1))
+								.then(CommandManager.argument("pos",
+												IntegerArgumentType.integer(0))
+										.executes(CommandOperationManager::runAddMass)))
 		);
 	}
 
 	private static void registerAddPivot() {
 		dispatcher.register(
-				CommandManager.literal("").executes(commandContext -> {
-
-					return 1;
-				})
+				CommandManager.literal("tippingAddPivot")
+						.then(CommandManager.argument("pos",
+										IntegerArgumentType.integer(0))
+								.executes(CommandOperationManager::runAddPivotPoint))
 		);
 	}
 
@@ -97,6 +110,25 @@ public class ModCommands {
 						.executes(CommandOperationManager::runSimulateStep)
 						.then(CommandManager.argument("tickDelta", IntegerArgumentType.integer(1))
 								.executes(CommandOperationManager::runSimulateSteps))
+		);
+	}
+
+	private static void registerSetHeight() {
+		dispatcher.register(
+				CommandManager.literal("tippingSetHeight")
+						.then(CommandManager.argument("height", IntegerArgumentType.integer(1))
+								.executes(CommandOperationManager::runSetHeight))
+		);
+	}
+
+	private static void registerList() {
+		dispatcher.register(
+				CommandManager.literal("tippingList")
+						.then(CommandManager.argument("type", StringArgumentType.word())
+								.suggests(((commandContext, suggestionsBuilder) ->
+										CommandSource.suggestMatching(List.of("pivots", "masses"), suggestionsBuilder)))
+								.executes(CommandOperationManager::runList)
+						)
 		);
 	}
 

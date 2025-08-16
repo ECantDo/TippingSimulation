@@ -16,7 +16,7 @@ public class SimulationController {
 
 	public SimulationController(int planeLength, int planeDepth, int heightOffGround,
 	                            Vec3i cornerPosition, ServerWorld world) {
-		plane = new Plane(planeLength, heightOffGround, new int[]{});
+		plane = new Plane(planeLength, heightOffGround);
 		planeBuilder = new BuildPlane(world, cornerPosition, plane);
 		this.planeDepth = planeDepth;
 	}
@@ -24,7 +24,7 @@ public class SimulationController {
 	//==================================================================================================================
 	// Control Simulation
 	//==================================================================================================================
-	public void setPlaneDepth(int depth){
+	public void setPlaneDepth(int depth) {
 		this.planeDepth = depth;
 	}
 
@@ -52,7 +52,35 @@ public class SimulationController {
 		this.planeBuilder.clearArea();
 	}
 
-	public void setLength(int length){
+	public void setLength(int length) {
 		this.plane.setLength(length);
+	}
+
+	public void setHeight(int height) {
+		this.plane.setHeight(height);
+	}
+
+	public boolean removePivot(int idx) {
+		return this.plane.removePivot(idx) != -1;
+	}
+
+	public boolean removeMass(int idx) {
+		return this.plane.removeMassLocation(idx) != null;
+	}
+
+	public int[] getPivots() {
+		return this.plane.getPivots();
+	}
+
+	public int[][] getMasses() {
+		return this.plane.getMassPoints();
+	}
+
+	public void clearMasses() {
+		this.plane.clearMassLocations();
+	}
+
+	public void clearPivots() {
+		this.plane.clearPivotLocations();
 	}
 }
